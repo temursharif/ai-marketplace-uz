@@ -2,7 +2,7 @@
 import { supabase } from "@/lib/supabase/client";
 import { approveService } from "@/app/actions/admin";
 import Link from 'next/link';
-import ApproveButton from '@/components/ApproveButton'; // Hali yaratilmagan
+// import ApproveButton from '@/components/ApproveButton'; // Hali yaratilmagan
 
 // Faqat tasdiqlanmagan xizmatlarni olish
 async function getPendingServices() {
