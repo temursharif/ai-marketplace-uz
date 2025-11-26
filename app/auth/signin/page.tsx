@@ -1,11 +1,14 @@
-// app/page.tsx (Tuzatilgan versiya: Suspense qo'shildi)
+// app/page.tsx
 import Link from 'next/link';
 import AICard from '@/components/AICard';
 import SearchAndFilter from '@/components/SearchAndFilter';
 import { supabase } from '@/lib/supabase/client';
-import { Suspense } from 'react'; // <--- YANGI IMPORT
+import { Suspense } from 'react';
 
-// Ma'lumot turi
+// --- YANGI QO'SHILGAN QATOR (MUXIM!) ---
+export const dynamic = 'force-dynamic';
+// ---------------------------------------
+
 interface Service {
   id: string;
   title: string;
@@ -53,7 +56,6 @@ export default async function Home({ searchParams }: HomeProps) {
     
     return (
         <div className="min-h-screen bg-gray-50">
-            
             <header className="sticky top-0 z-10 bg-white shadow-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                     <Link href="/" className="text-3xl font-extrabold text-indigo-600">
@@ -73,12 +75,9 @@ export default async function Home({ searchParams }: HomeProps) {
             </header>
             
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-                
-                {/* --- TUZATILGAN QISM: Suspense qo'shildi --- */}
                 <Suspense fallback={<div className="p-4 text-center text-gray-500">Qidiruv yuklanmoqda...</div>}>
                     <SearchAndFilter />
                 </Suspense>
-                {/* ------------------------------------------- */}
                 
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">
                     {search ? `"${search}" so'rovi bo'yicha natijalar` : 'Barcha AI Xizmatlar'}
@@ -97,7 +96,6 @@ export default async function Home({ searchParams }: HomeProps) {
                         ))}
                     </div>
                 )}
-                
             </main>
         </div>
     );
