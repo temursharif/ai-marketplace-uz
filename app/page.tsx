@@ -1,11 +1,10 @@
 // app/page.tsx (Asosiy Katalog Sahifasi)
 import Link from 'next/link';
 import AICard from '@/components/AICard';
+import SearchAndFilter from '@/components/SearchAndFilter';
 import { supabase } from '@/lib/supabase/client';
-import { cookies } from 'next/headers';
-import { revalidatePath } from 'next/cache';
 
-// Ma'lumot turi AICard ga mos kelishi kerak
+// Ma'lumot turi
 interface Service {
   id: string;
   title: string;
@@ -16,14 +15,34 @@ interface Service {
   tags: string[];
 }
 
+// Qidiruv parametrlarini qabul qiluvchi Server Component Props
+interface HomeProps {
+    searchParams: {
+        search?: string;
+        country?: string;
+    };
+}
+
 // Server Component: Ma'lumotni to'g'ridan-to'g'ri bazadan olish
-async function getAIProducts(): Promise<Service[]> {
-    // Biz hozircha App Routerda server component bilan ishlaymiz
-    const { data, error } = await supabase
+async function getAIProducts(searchQuery?: string, countryCode?: string): Promise<Service[]> {
+    let query = supabase
         .from('services')
         .select('*')
         .eq('approved', true) // Faqat Admin tasdiqlagan xizmatlarni ko'rsatamiz
         .order('created_at', { ascending: false });
+
+    // 1. Davlat Filtrlash Logikasi
+    if (countryCode && countryCode !== 'GLOBAL') {
+        query = query.eq('country', countryCode);
+    }
+    
+    // 2. Qidiruv Logikasi (Minimal - Title bo'yicha)
+    if (searchQuery) {
+        // PostGIS/Vector qidiruviga o'tishdan avvalgi sodda usul
+        query = query.ilike('title', `%${searchQuery}%`);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error("Ma'lumotlarni yuklashda xato:", error);
@@ -32,15 +51,14 @@ async function getAIProducts(): Promise<Service[]> {
     return data as Service[];
 }
 
-export default async function Home() {
-    // Bu funksiya serverda ishlaydi (Server Component)
-    const services = await getAIProducts(); 
+export default async function Home({ searchParams }: HomeProps) {
+    const { search, country } = searchParams;
+    const services = await getAIProducts(search, country); 
     
-    // HTML dan foydalanish uchun Client komponentga aylantiramiz
     return (
         <div className="min-h-screen bg-gray-50">
             
-            {/* 1. Navigatsiya (Dizayn) */}
+            {/* 1. Navigatsiya (Qo'llanma kodidan o'zgarmagan) */}
             <header className="sticky top-0 z-10 bg-white shadow-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                     <Link href="/" className="text-3xl font-extrabold text-indigo-600">
@@ -59,21 +77,19 @@ export default async function Home() {
             
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 
-                {/* 2. Sarlavha */}
-                <div className="text-center mb-12">
-                    <h1 className="text-5xl font-extrabold text-gray-900 mb-4">
-                        Kelajak AI Servislari. Bugun Sotib Oling.
-                    </h1>
-                    <p className="text-xl text-gray-500">
-                        Dunyodagi eng yaxshi AI vositalari bir joyda.
-                    </p>
-                </div>
+                {/* 2. Qidiruv Komponenti */}
+                <SearchAndFilter />
                 
-                {/* 3. Xizmat Kartalari (Katalog) */}
+                {/* 3. Katalog Natijalari */}
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                    {search ? `"${search}" so'rovi bo'yicha natijalar` : 'Barcha AI Xizmatlar'}
+                </h2>
+                
                 {services.length === 0 ? (
                     <div className="text-center p-10 bg-white rounded-xl shadow-lg">
-                        <p className="text-xl font-semibold text-gray-600">Hozircha tasdiqlangan AI xizmatlari yo'q.</p>
-                        <p className="text-gray-500 mt-2">Iltimos, avval /add-service orqali xizmat qo'shing va uni Admin tasdiqlashini kuting.</p>
+                        <p className="text-xl font-semibold text-gray-600">
+                            {search || country ? 'Kiritilgan filtr bo\'yicha hech narsa topilmadi.' : 'Hozircha tasdiqlangan AI xizmatlari yo\'q.'}
+                        </p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
