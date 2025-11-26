@@ -5,9 +5,8 @@ import SearchAndFilter from '@/components/SearchAndFilter';
 import { supabase } from '@/lib/supabase/client';
 import { Suspense } from 'react';
 
-// --- YANGI QO'SHILGAN QATOR (MUXIM!) ---
+// ⚠️ MUHIM QATOR: Sahifani dinamik qilish (Vercel xatosini tuzatadi)
 export const dynamic = 'force-dynamic';
-// ---------------------------------------
 
 interface Service {
   id: string;
@@ -51,11 +50,13 @@ async function getAIProducts(searchQuery?: string, countryCode?: string): Promis
 }
 
 export default async function Home({ searchParams }: HomeProps) {
-    const { search, country } = searchParams;
+    // searchParams ni to'g'ri o'qish uchun await qilish kerak (Next.js 15+)
+    const { search, country } = await searchParams; 
     const services = await getAIProducts(search, country); 
     
     return (
         <div className="min-h-screen bg-gray-50">
+            
             <header className="sticky top-0 z-10 bg-white shadow-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                     <Link href="/" className="text-3xl font-extrabold text-indigo-600">
@@ -75,6 +76,7 @@ export default async function Home({ searchParams }: HomeProps) {
             </header>
             
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                
                 <Suspense fallback={<div className="p-4 text-center text-gray-500">Qidiruv yuklanmoqda...</div>}>
                     <SearchAndFilter />
                 </Suspense>
@@ -96,6 +98,7 @@ export default async function Home({ searchParams }: HomeProps) {
                         ))}
                     </div>
                 )}
+                
             </main>
         </div>
     );
